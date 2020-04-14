@@ -1,23 +1,17 @@
 var express = require('express');
 var router = express.Router();
 const Blog = require('./models/Blog');
-/* GET home page. */
-// router.get('/', function(req, res, next) {
-//   res.render('index');
-// });
+
 
 // get blogs
-
-router.get('/', (req, res) => {
+router.get('/blogs', (req, res) => {
   Blog.find({}).then(blogs => {
     return res.status(200).json({ message: 'Success', blogs });
   }).catch(err=>res.status(500).json({message: 'Server Error', err}))
 });
 
-
-
 //post a blog
-router.post('/', (req, res) => {
+router.post('/blogs', (req, res) => {
 
   Blog.findOne({ blog: req.body.title })
     .then((blog) => {
@@ -43,9 +37,33 @@ router.post('/', (req, res) => {
     .catch(err => res.status(500).json({ message: 'Server Error' }, err));
 });
 
+// update a blog
+router.put('/update/:id', (req, res) => {
+  Blog.findById({ _id: req.params.id}).then(blog => {
+    if (blog) {
+      blog.title = req.body.title
+        ? req.body.title
+        : blog.title;
+
+      blog
+        .save()
+        .then(updated => {
+          return res
+            .status(200)
+            .json({ message: 'Blog Updated', updated });
+        })
+        .catch(err =>
+          res.status(500).json({ message: 'Unable to update the blog', err })
+        );
+    } else {
+      return res.status(200).json({ message: 'Cannot find the blog' });
+    }
+  }).catch(err=> res.status(500).json({message: 'Server Error', err}));
+});
+
 // delete a blog
-router.delete('/:title', (req, res) => {
-  Blog.findOneAndDelete({ title: req.params.title })
+router.delete('/delete/:id', (req, res) => {
+  Blog.findByIdAndDelete({ _id: req.params.id })
     .then(blog => {
       if(blog) {
         return res.status(200).json({ message: 'Blog deleted', blog });
@@ -57,8 +75,8 @@ router.delete('/:title', (req, res) => {
 });
 
 // find a blog 
-router.get('/:title', (req, res) => {
-  Blog.findOne({ title: req.params.title }).then(blog => {
+router.get('/blogs/:id', (req, res) => {
+  Blog.findById({ _id: req.params.id }).then(blog => {
     if(blog) {
       return res.status(200).json({ blog });
     }else {
